@@ -1,0 +1,22 @@
+[project]
+name = "SKAassignment"
+authors = [
+    {name = "CosmicCoderCat", email = ""},
+]
+maintainers = [
+    {name = "CosmicCoderCat"},
+]
+description = "Quality assessment tool for SKA observation data"
+keywords = ["SKA", "quality assessment"]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "python-casacore>=3.7.1",
+    "numpy>=2.2.5",
+    "ducc0>=0.37.1",
+    "scipy>=1.15.2",
+    "matplotlib>=3.10.1",
+    "jupyter"
+]
