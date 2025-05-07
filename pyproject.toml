@@ -1,11 +1,12 @@
 [project]
 name = "SKAassignment"
 authors = [
-    {name = "CosmicCoderCat", email = ""},
+    {name = "CosmicCoderCat", email = "133282324+CosmicCoderCat@users.noreply.github.com"},
 ]
 maintainers = [
     {name = "CosmicCoderCat"},
 ]
+version = "1.0.0"
 description = "Quality assessment tool for SKA observation data"
 keywords = ["SKA", "quality assessment"]
 readme = "README.md"
@@ -17,6 +18,12 @@ dependencies = [
     "numpy>=2.2.5",
     "ducc0>=0.37.1",
     "scipy>=1.15.2",
-    "matplotlib>=3.10.1",
-    "jupyter"
+    "matplotlib>=3.10.1"
+]
+
+[project.optional-dependencies]
+tests = [
+    "pytest>=8.3.5",
+    "pytest_mock>=3.14.0",
+    "pytest-cov>=6.1.1"
 ]
