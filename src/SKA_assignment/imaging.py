@@ -148,7 +148,7 @@ def deconvolve_image(img: np.ndarray, psf: np.ndarray, beam: np.ndarray, gain: f
     return final_image
 
 if __name__ == '__main__':
-    from data_handler import DataHandler
+    from SKA_assignment.data_handler import DataHandler
     data_handler = DataHandler('../../pipeline_problem_data.ms')
 
     vis = data_handler.get_visibilities()

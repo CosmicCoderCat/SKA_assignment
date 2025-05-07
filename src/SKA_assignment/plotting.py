@@ -34,9 +34,9 @@ def plot_dirty_clean(dirty_img: np.ndarray, clean_img: np.ndarray, vmin: float, 
     fig.colorbar(im1, ax=axs[1], fraction=0.046, pad=0.04).set_label("Intensity")
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig('all_time_freq.png')
 
-def plot_amplitude_vs_time(binned_amp: np.ndarray, time_bins: np.ndarray, title: str) -> None:
+def plot_amplitude_vs_time(binned_amp: np.ndarray, time_bins: np.ndarray, title: str, filename: str) -> None:
     """
     Plot average visibility amplitude vs time bins.
 
@@ -54,4 +54,4 @@ def plot_amplitude_vs_time(binned_amp: np.ndarray, time_bins: np.ndarray, title:
     plt.xlabel("Time Bins")
     plt.ylabel("Average Visibility Amplitude")
     plt.title(title)
-    plt.show()
+    plt.savefig(filename)
