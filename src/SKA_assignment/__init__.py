@@ -7,4 +7,6 @@ __all__ = [
     "get_psf",
     "get_beam",
     "deconvolve_image",
+    "plot_dirty_clean",
+    "plot_amplitude_vs_time",
 ]
