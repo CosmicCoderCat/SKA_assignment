@@ -67,6 +67,10 @@ class DataHandler:
 if __name__ == '__main__':
     # Initialize the data handler.
     data_handler = DataHandler('../../pipeline_problem_data.ms')
+    print("Data shape: ", data_handler.data.shape)
+    print("Time shape: ", data_handler.time_all.shape)
+    print("UVW shape: ", data_handler.uvw.shape)
+    print("Freq shape: ", data_handler.spec.getcol('CHAN_FREQ').shape)
     print("Visibilities shape:", data_handler.get_visibilities().shape)
     print("Unique times:", data_handler.get_times())
     print("Time step:", data_handler.get_time_step())
