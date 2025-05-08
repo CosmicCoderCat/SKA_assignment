@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import Optional
 
+# Directory to save the output images
+OUTPUT_DIR = "../../output"
+
 def plot_dirty_clean(dirty_img: np.ndarray, clean_img: np.ndarray, vmin: float, vmax: float, extra_label: Optional[str] = None) -> None:
     """
     Plot the dirty and cleaned images side by side.
@@ -34,7 +37,7 @@ def plot_dirty_clean(dirty_img: np.ndarray, clean_img: np.ndarray, vmin: float, 
     fig.colorbar(im1, ax=axs[1], fraction=0.046, pad=0.04).set_label("Intensity")
 
     plt.tight_layout()
-    plt.savefig('all_time_freq.png')
+    plt.savefig(f'{OUTPUT_DIR}/all_time_freq.png')
 
 def plot_amplitude_vs_time(binned_amp: np.ndarray, time_bins: np.ndarray, title: str, filename: str, outlier_mask: Optional[np.array] = None, amplitude_median: Optional[float] = None, amplitude_mad: Optional[float] = None, multiplier: Optional[int] = None) -> None:
     """
@@ -80,5 +83,5 @@ def plot_amplitude_vs_time(binned_amp: np.ndarray, time_bins: np.ndarray, title:
     ax.set_title(title)
     ax.legend()
     ax.grid(True)
-    plt.savefig(filename)
+    plt.savefig(f'{OUTPUT_DIR}/{filename}')
     plt.close()
