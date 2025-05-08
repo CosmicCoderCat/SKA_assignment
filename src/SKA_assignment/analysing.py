@@ -6,6 +6,7 @@ import math
 from SKA_assignment.data_handler import DataHandler
 from SKA_assignment.imaging import get_dirty_image, get_psf, get_beam, deconvolve_image
 from SKA_assignment.plotting import plot_dirty_clean, plot_amplitude_vs_time
+from SKA_assignment.utils import get_binned_visibility_amplitude, get_combined_masks
 
 # Configure logging
 logging.basicConfig(
@@ -13,9 +14,10 @@ logging.basicConfig(
 )
 
 
-def monitor_data_quality(
+def monitor_data_quality_over_time(
     data_handler: DataHandler,
     generate_plots: bool = True,
+    show_flags: bool = True,
     save_plots: bool = False,
     output_dir: str = None,
     first_t_frame: int = 0,
@@ -36,6 +38,8 @@ def monitor_data_quality(
     generate_plots : bool, optional
         If true, generate a visibility amplitude vs time plot for each channel
         in the channel range, by default False.
+    show_flags: bool, optional
+        If true, mark the flagged data in the plots, by default True.
     save_plots : bool, optional
         If true, save the plots to the output directory, by default False.
     ouput_dir : str, optional
@@ -60,6 +64,11 @@ def monitor_data_quality(
         How many channels to include in an averaged step, by default 1.
     flag_multiplier : int, optional
         How many MADs away from the median is a datapoint considered an outlier, by default 10.
+
+    Returns
+    -------
+    np.ndarray
+        Visibility mask for identified outliers.
     """
     # Unpack data from the DataHandler
     time_all = data_handler.time_all
@@ -68,45 +77,11 @@ def monitor_data_quality(
     unique_times = data_handler.get_times()
     dt = data_handler.get_time_step()
 
-    # Get the amplitude of the visibilities and group them by frequency instead
-    amplitude_all_vis = np.abs(vis).T
-
-    # Extract the requested frequency slices
-    amplitude_vis = amplitude_all_vis[
-        first_freq_step : first_freq_step + n_freq_steps * freq_step, :
-    ]
-
-    # Create a mask to extract the requested time slices for each frequency
-    combined_masks = []
-    for i, start_frame in enumerate(
-        range(first_t_frame, first_t_frame + nb_t_steps * t_step, t_step)
-    ):
-        end_frame = start_frame + t_step
-        t_start = unique_times[start_frame]
-        try:
-            t_end = unique_times[end_frame]
-        except IndexError:
-            t_end = unique_times[-1] + dt
-
-        # Include the autocorrelation filter in the mask
-        combined_masks.append(
-            [(~autocorr_filter) & (time_all >= t_start) & (time_all < t_end)]
-        )
-
-    # Compute binned amplitudes for all frequencies and time bins in one go
-    binned_amplitude = np.array(
-        [
-            [
-                np.mean(
-                    amplitude_vis[freq_index : freq_index + freq_step][combined_mask],
-                    axis=0,
-                )
-                if np.any(combined_mask)
-                else np.nan
-                for combined_mask in combined_masks
-            ]
-            for freq_index in range(n_freq_steps)
-        ]
+    combined_masks = get_combined_masks(
+        time_all, unique_times, dt, autocorr_filter, first_t_frame, nb_t_steps, t_step
+    )
+    binned_amplitude = get_binned_visibility_amplitude(
+        vis, combined_masks, first_freq_step, n_freq_steps, freq_step
     )
 
     # Compute statistics (median and median abs deviation) for each frequency
@@ -129,6 +104,45 @@ def monitor_data_quality(
             for i in range(n_freq_steps)
         ]
     )
+
+    # Retrieve the indices of the outliers
+    outlier_indices = np.where(outlier_mask)
+
+    # Create a 2D array of frequencies and times where outliers are identified
+    outlier_locations = np.array(
+        [
+            [first_freq_step + i * freq_step, first_t_frame + j * t_step]
+            for i, j in zip(outlier_indices[0], outlier_indices[1])
+        ]
+    )
+
+    # Log the outlier locations
+    logging.info(f"Outlier locations (frequency, time): {outlier_locations}")
+
+    # Create a 2D mask for the visibilities of where outliers are identified
+    visibility_mask = np.ones(vis.shape, dtype=bool)
+
+    for freq_bin, time_bin in outlier_locations:
+        freq_start = first_freq_step + freq_bin * freq_step
+        freq_end = freq_start + freq_step
+
+        start_frame = time_bin
+        end_frame = time_bin + t_step
+        t_start = unique_times[start_frame]
+        try:
+            t_end = unique_times[end_frame]
+        except IndexError:
+            t_end = unique_times[-1] + dt
+
+        # Identify the indices in time_all that match the time bin
+        time_indices = np.where((time_all >= t_start) & (time_all < t_end))[0]
+
+        # Mark the corresponding region in the mask as False (indicating outliers)
+        for time_idx in time_indices:
+            visibility_mask[time_idx, freq_start:freq_end] = False
+
+    # Log the outlier locations
+    logging.info(f"Outlier locations (frequency, time): {visibility_mask}")
 
     # Log statistics per channel
     stats_str = "\n".join(
@@ -157,10 +171,12 @@ def monitor_data_quality(
                 output_dir=output_dir,
             )
 
+    return visibility_mask
+
 
 def visualize_data(
     data_handler,
-    apply_flags=False,
+    flags=None,
     save_plots: bool = False,
     output_dir: str = None,
     vmin: float = -20000,
@@ -178,8 +194,8 @@ def visualize_data(
     ----------
     data_handler : DataHandler
         DataHandler object containing the measurement set data.
-    apply_flags : bool, optional
-        If true, remove flagged data from the final images, by default False
+    flags : np.ndarray, optional
+        A (nfreq, nunique_times) array of flags to apply to the data, by default None.
     save_plots : bool, optional
         If true, save the plots to the output directory, by default False.
     ouput_dir : str, optional
@@ -239,6 +255,9 @@ def visualize_data(
 
             # Combine with autocorrelation filter.
             combined_mask = autocorr_mask & time_mask
+
+            if flags is not None:
+                vis = np.where(flags, vis, np.nan)
 
             # Check if there are enough visibilities in this time window.
             if not np.any(combined_mask):
