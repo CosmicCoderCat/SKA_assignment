@@ -1,8 +1,12 @@
 import scipy
 import numpy as np
+import logging
 
 from SKA_assignment.data_handler import DataHandler
 from SKA_assignment.plotting import plot_amplitude_vs_time
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def monitor_data_quality(data_path: str, generate_plots: bool = False, first_t_frame: int = 0, nb_t_steps: int = 120, t_step: int = 1, first_freq_step: int = 0, n_freq_steps: int = 32, freq_step: int = 1, flag_multiplier: int = 10) -> None:
     """Monitor the data quality by checking the median and median absolute deviation of the visibility amplitude over time, for each frequency channel.
@@ -81,8 +85,11 @@ def monitor_data_quality(data_path: str, generate_plots: bool = False, first_t_f
             for i in range(n_freq_steps)
             ])
 
-    print(amplitude_median)
-    print(amplitude_mad)
+    stats_str = "\n".join(
+        f"Channel {first_freq_step + i * freq_step}: Median = {amplitude_median[i]}, MAD = {amplitude_mad[i]}"
+        for i in range(n_freq_steps)
+    )
+    logging.info(stats_str)
 
     # Plot results for each frequency
     if generate_plots:
