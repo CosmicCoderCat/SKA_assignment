@@ -27,6 +27,10 @@ def plot_dirty_clean(
         Maximum intensity value for the color scale.
     extra_label : Optional[str], optional
         Additional label to include in the plot titles, by default None.
+    save : bool, optional
+        If true, save the plots to the output directory, by default False.
+    ouput_dir : str, optional
+        Directory to save the plots, by default None.
     """
     fig, axs = plt.subplots(1, 2, figsize=(18, 10))
 
@@ -88,6 +92,10 @@ def plot_amplitude_vs_time(
     multiplier: Optional[int], optional
         Multiplier for the median absolute deviation, marking flagging region,
         not plotted by default None.
+    save : bool, optional
+        If true, save the plots to the output directory, by default False.
+    ouput_dir : str, optional
+        Directory to save the plots, by default None.
     """
 
     fig, ax = plt.subplots(figsize=(10, 5))
