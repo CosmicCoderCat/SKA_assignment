@@ -8,13 +8,13 @@ from SKA_assignment.plotting import plot_amplitude_vs_time
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def monitor_data_quality(data_path: str, generate_plots: bool = False, first_t_frame: int = 0, nb_t_steps: int = 120, t_step: int = 1, first_freq_step: int = 0, n_freq_steps: int = 32, freq_step: int = 1, flag_multiplier: int = 10) -> None:
+def monitor_data_quality(data_handler: DataHandler, generate_plots: bool = True, first_t_frame: int = 0, nb_t_steps: int = 120, t_step: int = 1, first_freq_step: int = 0, n_freq_steps: int = 32, freq_step: int = 1, flag_multiplier: int = 10) -> None:
     """Monitor the data quality by checking the median and median absolute deviation of the visibility amplitude over time, for each frequency channel.
 
     Parameters
     ----------
-    data_path : str
-        Path to the measurement set file.
+    data_handler : DataHandler
+        DataHandler object containing the measurement set data.
     generate_plots : bool, optional
         If true, generate a visibility amplitude vs time plot for each channel in the channel range, by default False.
     first_t_frame : int, optional
@@ -38,9 +38,7 @@ def monitor_data_quality(data_path: str, generate_plots: bool = False, first_t_f
     flag_multiplier : int, optional
         How many MADs away from the median is a datapoint considered an outlier, by default 10.
     """
-    # Load the data
-    data_handler = DataHandler('../../pipeline_problem_data.ms')
-
+    # Unpack data from the DataHandler
     time_all = data_handler.time_all
     autocorr_filter = data_handler.get_autocorr_filter()
     vis = data_handler.get_visibilities()
@@ -85,6 +83,7 @@ def monitor_data_quality(data_path: str, generate_plots: bool = False, first_t_f
             for i in range(n_freq_steps)
             ])
 
+    # Log statistics per channel
     stats_str = "\n".join(
         f"Channel {first_freq_step + i * freq_step}: Median = {amplitude_median[i]}, MAD = {amplitude_mad[i]}"
         for i in range(n_freq_steps)
@@ -98,6 +97,3 @@ def monitor_data_quality(data_path: str, generate_plots: bool = False, first_t_f
             title = f"Time Series of Visibility Amplitude for Channel {first_freq_step + i * freq_step}"
             filename = f"amplitude_vs_time_channel_{first_freq_step + i * freq_step}.png"
             plot_amplitude_vs_time(binned_amplitude[i, :], range(first_t_frame, first_t_frame + nb_t_steps), title, filename, outlier_mask[i, :], amplitude_median = amplitude_median[i], amplitude_mad = amplitude_mad[i], multiplier = flag_multiplier)
-
-if __name__ == '__main__':
-    monitor_data_quality("../../pipeline_problem_data.ms", generate_plots=True, flag_multiplier=10)
