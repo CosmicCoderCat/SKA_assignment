@@ -2,6 +2,7 @@ import casacore.tables
 import numpy as np
 from typing import Union
 
+
 class DataHandler:
     """
     A class to read in measurement set data and provide methods to access the data.
@@ -63,14 +64,15 @@ class DataHandler:
         times = self.get_times()
         dt = times[1] - times[0] if len(times) > 1 else 0
         return dt
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     # Initialize the data handler.
-    data_handler = DataHandler('../../pipeline_problem_data.ms')
+    data_handler = DataHandler("../../pipeline_problem_data.ms")
     print("Data shape: ", data_handler.data.shape)
     print("Time shape: ", data_handler.time_all.shape)
     print("UVW shape: ", data_handler.uvw.shape)
-    print("Freq shape: ", data_handler.spec.getcol('CHAN_FREQ').shape)
+    print("Freq shape: ", data_handler.spec.getcol("CHAN_FREQ").shape)
     print("Visibilities shape:", data_handler.get_visibilities().shape)
     print("Unique times:", data_handler.get_times())
     print("Time step:", data_handler.get_time_step())

@@ -2,7 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import Optional
 
-def plot_dirty_clean(dirty_img: np.ndarray, clean_img: np.ndarray, vmin: float, vmax: float, extra_label: Optional[str] = None, save: bool = True, output_dir: Optional[str] = None) -> None:
+
+def plot_dirty_clean(
+    dirty_img: np.ndarray,
+    clean_img: np.ndarray,
+    vmin: float,
+    vmax: float,
+    extra_label: Optional[str] = None,
+    save: bool = True,
+    output_dir: Optional[str] = None,
+) -> None:
     """
     Plot the dirty and cleaned images side by side.
 
@@ -35,14 +44,28 @@ def plot_dirty_clean(dirty_img: np.ndarray, clean_img: np.ndarray, vmin: float, 
 
     plt.tight_layout()
 
-    filename = f'{output_dir}/dirty_vs_clean.png' if output_dir else 'dirty_vs_clean.png'
+    filename = (
+        f"{output_dir}/dirty_vs_clean.png" if output_dir else "dirty_vs_clean.png"
+    )
     if save:
         plt.savefig(filename)
     else:
         plt.show()
     plt.close()
 
-def plot_amplitude_vs_time(binned_amp: np.ndarray, time_bins: np.ndarray, title: str, filename: str, outlier_mask: Optional[np.array] = None, amplitude_median: Optional[float] = None, amplitude_mad: Optional[float] = None, multiplier: Optional[int] = None, save: bool = True, output_dir: Optional[str] = None) -> None:
+
+def plot_amplitude_vs_time(
+    binned_amp: np.ndarray,
+    time_bins: np.ndarray,
+    title: str,
+    filename: str,
+    outlier_mask: Optional[np.array] = None,
+    amplitude_median: Optional[float] = None,
+    amplitude_mad: Optional[float] = None,
+    multiplier: Optional[int] = None,
+    save: bool = True,
+    output_dir: Optional[str] = None,
+) -> None:
     """
     Plot average visibility amplitude vs time bins.
 
@@ -63,31 +86,51 @@ def plot_amplitude_vs_time(binned_amp: np.ndarray, time_bins: np.ndarray, title:
     amplitude_mad: Optional[float], optional
         Median absoulute deviation of the visibility amplitude, not plotted by default None.
     multiplier: Optional[int], optional
-        Multiplier for the median absolute deviation, marking flagging region, not plotted by default None.
+        Multiplier for the median absolute deviation, marking flagging region,
+        not plotted by default None.
     """
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(time_bins, binned_amp, marker='o', linestyle='-', zorder=1)
+    ax.plot(time_bins, binned_amp, marker="o", linestyle="-", zorder=1)
 
     if amplitude_median is not None:
-        ax.plot(time_bins, np.full(len(time_bins), amplitude_median), color='orange', label='Median', zorder=10)
+        ax.plot(
+            time_bins,
+            np.full(len(time_bins), amplitude_median),
+            color="orange",
+            label="Median",
+            zorder=10,
+        )
 
     if amplitude_mad is not None:
-        ax.fill_between(time_bins,
-                        amplitude_median - multiplier * amplitude_mad,
-                        amplitude_median + multiplier * amplitude_mad,
-                        color='orange', alpha=0.3, label=f'{multiplier}x Median Abs Deviation', zorder=20)
+        ax.fill_between(
+            time_bins,
+            amplitude_median - multiplier * amplitude_mad,
+            amplitude_median + multiplier * amplitude_mad,
+            color="orange",
+            alpha=0.3,
+            label=f"{multiplier}x Median Abs Deviation",
+            zorder=20,
+        )
 
     if outlier_mask is not None:
-        ax.scatter(np.array(time_bins)[outlier_mask], binned_amp[outlier_mask], marker='x', color='red', linestyle='-', label='Amplitude', zorder=30)
+        ax.scatter(
+            np.array(time_bins)[outlier_mask],
+            binned_amp[outlier_mask],
+            marker="x",
+            color="red",
+            linestyle="-",
+            label="Amplitude",
+            zorder=30,
+        )
 
     ax.set_xlabel("Time Bins")
     ax.set_ylabel("Average Visibility Amplitude")
     ax.set_title(title)
     ax.legend()
     ax.grid(True)
-    
-    filename = f'{output_dir}/{filename}' if output_dir else filename
+
+    filename = f"{output_dir}/{filename}" if output_dir else filename
     if save:
         plt.savefig(filename)
     else:

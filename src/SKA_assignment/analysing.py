@@ -6,23 +6,40 @@ from SKA_assignment.data_handler import DataHandler
 from SKA_assignment.plotting import plot_amplitude_vs_time
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-def monitor_data_quality(data_handler: DataHandler, generate_plots: bool = True, save_plots: bool = False, output_dir: str = None, first_t_frame: int = 0, nb_t_steps: int = 120, t_step: int = 1, first_freq_step: int = 0, n_freq_steps: int = 32, freq_step: int = 1, flag_multiplier: int = 10) -> None:
-    """Monitor the data quality by checking the median and median absolute deviation of the visibility amplitude over time, for each frequency channel.
+
+def monitor_data_quality(
+    data_handler: DataHandler,
+    generate_plots: bool = True,
+    save_plots: bool = False,
+    output_dir: str = None,
+    first_t_frame: int = 0,
+    nb_t_steps: int = 120,
+    t_step: int = 1,
+    first_freq_step: int = 0,
+    n_freq_steps: int = 32,
+    freq_step: int = 1,
+    flag_multiplier: int = 10,
+) -> None:
+    """Monitor the data quality by checking the median and median absolute deviation
+    of the visibility amplitude over time, for each frequency channel.
 
     Parameters
     ----------
     data_handler : DataHandler
         DataHandler object containing the measurement set data.
     generate_plots : bool, optional
-        If true, generate a visibility amplitude vs time plot for each channel in the channel range, by default False.
+        If true, generate a visibility amplitude vs time plot for each channel
+        in the channel range, by default False.
     save_plots : bool, optional
         If true, save the plots to the output directory, by default False.
     ouput_dir : str, optional
         Directory to save the plots, by default None.
     first_t_frame : int, optional
-        Used to select a subset of time frames to analyse. 
+        Used to select a subset of time frames to analyse.
         Time frame to start analysis from, by default 0.
     nb_t_steps : int, optional
         Used to select a subset of time frames to analyse.
@@ -53,11 +70,15 @@ def monitor_data_quality(data_handler: DataHandler, generate_plots: bool = True,
     amplitude_all_vis = np.abs(vis).T
 
     # Extract the requested frequency slices
-    amplitude_vis = amplitude_all_vis[first_freq_step:first_freq_step+n_freq_steps*freq_step, :]
+    amplitude_vis = amplitude_all_vis[
+        first_freq_step : first_freq_step + n_freq_steps * freq_step, :
+    ]
 
     # Create a mask to extract the requested time slices for each frequency
     combined_masks = []
-    for i, start_frame in enumerate(range(first_t_frame, first_t_frame + nb_t_steps * t_step, t_step)):
+    for i, start_frame in enumerate(
+        range(first_t_frame, first_t_frame + nb_t_steps * t_step, t_step)
+    ):
         end_frame = start_frame + t_step
         t_start = unique_times[start_frame]
         try:
@@ -66,26 +87,46 @@ def monitor_data_quality(data_handler: DataHandler, generate_plots: bool = True,
             t_end = unique_times[-1] + dt
 
         # Include the autocorrelation filter in the mask
-        combined_masks.append([(~autocorr_filter) & (time_all >= t_start) & (time_all < t_end)])
+        combined_masks.append(
+            [(~autocorr_filter) & (time_all >= t_start) & (time_all < t_end)]
+        )
 
     # Compute binned amplitudes for all frequencies and time bins in one go
-    binned_amplitude = np.array([[
-        np.mean(amplitude_vis[freq_index:freq_index+freq_step][combined_mask], axis=0) if np.any(combined_mask) else np.nan
-        for combined_mask in combined_masks
+    binned_amplitude = np.array(
+        [
+            [
+                np.mean(
+                    amplitude_vis[freq_index : freq_index + freq_step][combined_mask],
+                    axis=0,
+                )
+                if np.any(combined_mask)
+                else np.nan
+                for combined_mask in combined_masks
+            ]
+            for freq_index in range(n_freq_steps)
         ]
-        for freq_index in range(n_freq_steps)
-    ])  # Shape: (nb_t_steps, n_freq_steps)
+    )  # Shape: (nb_t_steps, n_freq_steps)
 
     # Compute statistics (median and median abs deviation) for each frequency
     amplitude_median = np.nanmedian(binned_amplitude, axis=1)  # Shape: (n_freq_steps,)
-    amplitude_mad = scipy.stats.median_abs_deviation(binned_amplitude, axis=1, scale="normal")  # Shape: (n_freq_steps,)
+    amplitude_mad = scipy.stats.median_abs_deviation(
+        binned_amplitude, axis=1, scale="normal"
+    )  # Shape: (n_freq_steps,)
 
     # Create a mask for outliers based on the median and MAD
-    outlier_mask = np.array([
-            (binned_amplitude[i, :] >= (amplitude_median[i] + flag_multiplier * amplitude_mad[i])) | \
-            (binned_amplitude[i, :] <= amplitude_median[i] - flag_multiplier * amplitude_mad[i]) 
+    outlier_mask = np.array(
+        [
+            (
+                binned_amplitude[i, :]
+                >= (amplitude_median[i] + flag_multiplier * amplitude_mad[i])
+            )
+            | (
+                binned_amplitude[i, :]
+                <= amplitude_median[i] - flag_multiplier * amplitude_mad[i]
+            )
             for i in range(n_freq_steps)
-            ])
+        ]
+    )
 
     # Log statistics per channel
     stats_str = "\n".join(
@@ -99,5 +140,18 @@ def monitor_data_quality(data_handler: DataHandler, generate_plots: bool = True,
         for i in range(n_freq_steps):
             # fig, ax = plt.subplots(figsize=(10, 5))
             title = f"Time Series of Visibility Amplitude for Channel {first_freq_step + i * freq_step}"
-            filename = f"amplitude_vs_time_channel_{first_freq_step + i * freq_step}.png"
-            plot_amplitude_vs_time(binned_amplitude[i, :], range(first_t_frame, first_t_frame + nb_t_steps), title, filename, outlier_mask[i, :], amplitude_median = amplitude_median[i], amplitude_mad = amplitude_mad[i], multiplier = flag_multiplier, save = save_plots, output_dir = output_dir)
+            filename = (
+                f"amplitude_vs_time_channel_{first_freq_step + i * freq_step}.png"
+            )
+            plot_amplitude_vs_time(
+                binned_amplitude[i, :],
+                range(first_t_frame, first_t_frame + nb_t_steps),
+                title,
+                filename,
+                outlier_mask[i, :],
+                amplitude_median=amplitude_median[i],
+                amplitude_mad=amplitude_mad[i],
+                multiplier=flag_multiplier,
+                save=save_plots,
+                output_dir=output_dir,
+            )
